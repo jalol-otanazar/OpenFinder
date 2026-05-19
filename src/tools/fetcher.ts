@@ -35,7 +35,21 @@ export interface Fetcher {
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 3;
-const USER_AGENT = 'FInder/0.1 (+https://github.com/finder; graduate-program advisor)';
+
+/**
+ * A mainstream desktop-browser User-Agent. Many government registry and
+ * university sites reject the obvious bot UA with HTTP 403; a standard browser
+ * UA + Accept headers gets past that first, crude tier of bot defence.
+ * Override per request via `headers` when a source needs something specific.
+ */
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+const DEFAULT_HEADERS: Record<string, string> = {
+  'user-agent': USER_AGENT,
+  accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'accept-language': 'en-US,en;q=0.9',
+};
 
 /** Plain-HTTP fetcher — tier 1 of the tiered strategy. */
 export class HttpFetcher implements Fetcher {
@@ -48,7 +62,7 @@ export class HttpFetcher implements Fetcher {
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       const init: RequestInit = {
         method: req.method ?? 'GET',
-        headers: { 'user-agent': USER_AGENT, ...req.headers },
+        headers: { ...DEFAULT_HEADERS, ...req.headers },
         signal: controller.signal,
       };
       if (req.body !== undefined) init.body = req.body;

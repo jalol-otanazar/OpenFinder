@@ -121,7 +121,7 @@ All artifacts land in `runs/<run-id>/`:
 ## Development
 
 ```sh
-npm test         # vitest — 163 offline tests
+npm test         # vitest — 164 offline tests
 npm run lint     # eslint
 npm run typecheck
 ```
@@ -136,9 +136,14 @@ design specifications that drive the build live in `skills/`, `rules/`, `schemas
 ## Status
 
 All six pipeline skills are built and the CLI runs end to end. The pipeline logic is
-covered by 163 offline tests (stub LLM / fetch / search); live LLM, fetch, and search
+covered by 164 offline tests (stub LLM / fetch / search); live LLM, fetch, and search
 behaviour is exercised only by the opt-in `FINDER_LIVE_SMOKE` suite — a real end-to-end
 run against your own provider key is worthwhile validation before relying on the output.
+
+Live registries verified working today: **US** (IPEDS), **UK** (OfS Register), **Germany**
+(Hochschulkompass), **Netherlands** (DUO/RIO). **Canada** (Universities Canada) and
+**Australia** (TEQSA) may bot-block plain HTTP clients depending on your IP — set
+`FINDER_CA_REGISTRY_URL` / `FINDER_AU_REGISTRY_URL` to a manually saved page if so.
 
 ## License
 

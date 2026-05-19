@@ -4,8 +4,12 @@ import type { RegistryInstitution, RegistrySource } from '../../core/types/regis
 import { canonicalUrl, cleanName, normalizeHost } from '../normalize.js';
 import type { RegistryFetchContext, RegistryFetchResult, RegistryProvider } from '../provider.js';
 
-/** Best-effort default for the Universities Canada member list. */
-const DEFAULT_CA_URL = 'https://www.univcan.ca/universities/member-universities/';
+/**
+ * Default for the Universities Canada members page. The page is gated by a
+ * bot defence that can refuse plain HTTP clients from some IPs (HTTP 403); set
+ * FINDER_CA_REGISTRY_URL to a manually saved copy if that happens.
+ */
+const DEFAULT_CA_URL = 'https://univcan.ca/about-universities-canada/our-members/';
 const CA_ENV = 'FINDER_CA_REGISTRY_URL';
 const CA_SELECTOR_ENV = 'FINDER_CA_REGISTRY_SELECTOR';
 

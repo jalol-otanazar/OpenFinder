@@ -4,11 +4,12 @@ import type { RegistryFetchContext, RegistryFetchResult, RegistryProvider } from
 import { parseCsvRegistry } from './csv-registry.js';
 
 /**
- * Best-effort default for the DUO/RIO recognised-institutions export. Registry
- * URLs drift; override with FINDER_NL_REGISTRY_URL if DUO republishes it.
+ * The DUO Open Onderwijsdata `adressen_ho` resource — addresses of recognised
+ * Dutch HE institutions, served as a comma-delimited CSV. Override with
+ * FINDER_NL_REGISTRY_URL if DUO rotates the resource id.
  */
 const DEFAULT_NL_URL =
-  'https://onderwijsdata.duo.nl/dataset/rio-instellingen/resource/instellingen-ho.csv';
+  'https://onderwijsdata.duo.nl/dataset/37051cda-b681-43eb-a385-efa18e99cdd2/resource/bf1da9c6-c688-4873-91b1-b12c9ac2c132/download/instellingenho.csv';
 
 const NL_ENV = 'FINDER_NL_REGISTRY_URL';
 
@@ -31,15 +32,14 @@ export class NetherlandsDuoProvider implements RegistryProvider {
     const institutions = parseCsvRegistry(res.text(), {
       country: 'Netherlands',
       registrySource: 'DUO/RIO',
-      delimiter: ';',
       columns: {
         name: ['INSTELLINGSNAAM', 'naam instelling', 'instellingsnaam', 'naam'],
         url: ['INTERNETADRES', 'website', 'internetadres', 'url'],
         region: ['PROVINCIE', 'provincie', 'gemeente', 'plaats'],
         id: ['INSTELLINGSCODE', 'BRIN', 'instellingscode', 'onderwijsnummer'],
-        type: ['SOORT INSTELLING', 'soort', 'onderwijssector', 'type'],
+        type: ['SOORT HO', 'SOORT INSTELLING', 'soort', 'onderwijssector', 'type'],
       },
-      keepTypes: ['universiteit', 'hogeschool', 'university'],
+      keepTypes: ['hbo', 'wo', 'universiteit', 'hogeschool', 'university'],
     });
 
     if (institutions.length === 0) {

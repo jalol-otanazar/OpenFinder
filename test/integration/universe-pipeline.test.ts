@@ -52,24 +52,18 @@ function fixtureFetcher(): StubFetcher {
         'Australian National University,https://anu.edu.au,ACT,Australian University\n',
     },
     [STUB_URLS.de]: {
-      body: JSON.stringify([
-        {
-          name: 'Technische Universität Berlin',
-          website: 'https://tu.berlin',
-          bundesland: 'Berlin',
-        },
-        {
-          name: 'Universität Heidelberg',
-          website: 'https://uni-heidelberg.de',
-          bundesland: 'Baden-Württemberg',
-        },
-      ]),
+      // The real Hochschulkompass list is tab-separated; use ASCII names in
+      // the fixture to keep it independent of Latin-1 decoding.
+      body:
+        'Hs-Nr.\tHochschulkurzname\tHochschulname\tBundesland\n' +
+        '01\tTU Berlin\tTechnische Universitaet Berlin\tBerlin\n' +
+        '02\tUni HD\tUniversitaet Heidelberg\tBaden-Wuerttemberg\n',
     },
     [STUB_URLS.nl]: {
       body:
-        'INSTELLINGSNAAM;INTERNETADRES;PROVINCIE;SOORT INSTELLING\n' +
-        'Universiteit van Amsterdam;https://uva.nl;Noord-Holland;Universiteit\n' +
-        'Technische Universiteit Delft;https://tudelft.nl;Zuid-Holland;Universiteit\n',
+        'INSTELLINGSNAAM,INTERNETADRES,PROVINCIE,SOORT HO\n' +
+        'Universiteit van Amsterdam,https://uva.nl,Noord-Holland,wo\n' +
+        'Technische Universiteit Delft,https://tudelft.nl,Zuid-Holland,wo\n',
     },
   });
 }

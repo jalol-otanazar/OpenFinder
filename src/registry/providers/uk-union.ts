@@ -1,76 +1,63 @@
 import { RegistryError } from '../../core/errors.js';
 import type { RegistryInstitution, RegistrySource } from '../../core/types/registry.js';
+import { canonicalUrl, cleanName } from '../normalize.js';
 import type { RegistryFetchContext, RegistryFetchResult, RegistryProvider } from '../provider.js';
 import { type CsvColumnSpec, parseCsvRegistry } from './csv-registry.js';
 
 /**
- * One UK sub-source. The UK universe is a union: a UK-wide HESA list plus the
- * four nation regulators. Each is fetched independently — a dead source
- * degrades the union, it does not sink it.
+ * One UK sub-source. The UK universe is a union of independent registers, each
+ * fetched separately — a dead source degrades the union, it does not sink it.
+ *
+ * Working sources today:
+ *  - **OfS Register API** — the Office for Students register of English HE
+ *    providers, served as JSON with no bot wall. The reliable UK source.
+ *  - **HESA** — the UK-wide provider list. HESA sits behind a Cloudflare
+ *    JavaScript bot-challenge, so a plain HTTP fetch is usually blocked (it
+ *    degrades gracefully). It is kept because it is the correct UK-wide source:
+ *    point `FINDER_UK_HESA_URL` at a manually downloaded CSV to use it.
  */
 interface UkSubSource {
   label: string;
   envVar: string;
   defaultUrl: string;
   registrySource: string;
-  columns: CsvColumnSpec;
-  /** Applied when the source's rows have no region of their own. */
-  fixedRegion?: string;
+  /** Turn a raw response body into institutions. */
+  parse: (body: string) => RegistryInstitution[];
 }
 
-const COMMON_NAME = ['HE Provider', 'Provider name', "Provider's name", 'Institution', 'name'];
-const COMMON_URL = ['Website', 'Web address', 'URL', 'url'];
-const COMMON_ID = ['UKPRN', 'ukprn', 'Provider UKPRN'];
+const HESA_COLUMNS: CsvColumnSpec = {
+  name: ['HE Provider', 'Provider Name', "Provider's name", 'Provider', 'Institution', 'name'],
+  url: ['Website', 'Web address', 'URL', 'url'],
+  region: ['Country', 'Region'],
+  id: ['UKPRN', 'ukprn', 'Provider UKPRN'],
+};
 
 const UK_SUB_SOURCES: UkSubSource[] = [
   {
-    label: 'HESA HE providers (UK-wide)',
-    envVar: 'FINDER_UK_HESA_URL',
-    defaultUrl: 'https://www.hesa.ac.uk/support/providers/he-providers.csv',
-    registrySource: 'HESA',
-    columns: { name: COMMON_NAME, url: COMMON_URL, region: ['Region', 'Country'], id: COMMON_ID },
-  },
-  {
     label: 'Office for Students Register (England)',
     envVar: 'FINDER_UK_OFS_URL',
-    defaultUrl: 'https://register-api.officeforstudents.org.uk/api/download/csv',
-    registrySource: 'Office for Students Register',
-    columns: { name: COMMON_NAME, url: COMMON_URL, id: COMMON_ID },
-    fixedRegion: 'England',
+    defaultUrl: 'https://register-api.officeforstudents.org.uk/api/Provider',
+    registrySource: 'OfS Register',
+    parse: parseOfsJson,
   },
   {
-    label: 'Scottish Funding Council (Scotland)',
-    envVar: 'FINDER_UK_SFC_URL',
-    defaultUrl: 'https://www.sfc.ac.uk/data/funded-institutions.csv',
-    registrySource: 'Scottish Funding Council',
-    columns: { name: COMMON_NAME, url: COMMON_URL, id: COMMON_ID },
-    fixedRegion: 'Scotland',
-  },
-  {
-    label: 'Medr / HEFCW (Wales)',
-    envVar: 'FINDER_UK_WALES_URL',
-    defaultUrl: 'https://www.medr.cymru/data/funded-institutions.csv',
-    registrySource: 'Medr (HEFCW)',
-    columns: { name: COMMON_NAME, url: COMMON_URL, id: COMMON_ID },
-    fixedRegion: 'Wales',
-  },
-  {
-    label: 'Dept. for the Economy (Northern Ireland)',
-    envVar: 'FINDER_UK_NI_URL',
-    defaultUrl: 'https://www.economy-ni.gov.uk/data/he-institutions.csv',
-    registrySource: 'Dept. for the Economy NI',
-    columns: { name: COMMON_NAME, url: COMMON_URL, id: COMMON_ID },
-    fixedRegion: 'Northern Ireland',
+    label: 'HESA HE providers (UK-wide)',
+    envVar: 'FINDER_UK_HESA_URL',
+    defaultUrl:
+      'https://www.hesa.ac.uk/collection/provider-tools/all_hesa_providers?ProviderAllCurrentHESA.csv',
+    registrySource: 'HESA',
+    parse: (body) =>
+      parseCsvRegistry(body, { country: 'UK', registrySource: 'HESA', columns: HESA_COLUMNS }),
   },
 ];
 
-/** UK registry — union of UK-wide HESA + the four nation regulators. */
+/** UK registry — union of the OfS register (England) and the HESA UK-wide list. */
 export class UkUnionProvider implements RegistryProvider {
   readonly country = 'UK' as const;
-  readonly sourceLabel = 'HESA + Office for Students + SFC + Medr + DfE NI';
+  readonly sourceLabel = 'Office for Students Register + HESA';
 
   async fetch(ctx: RegistryFetchContext): Promise<RegistryFetchResult> {
-    ctx.logger.step('UK: fetching union of HESA + four nation registers…');
+    ctx.logger.step('UK: fetching union of the OfS register and the HESA list…');
 
     const settled = await Promise.allSettled(UK_SUB_SOURCES.map((sub) => fetchSubSource(sub, ctx)));
 
@@ -109,14 +96,14 @@ export class UkUnionProvider implements RegistryProvider {
 
     if (succeeded === 0) {
       throw new RegistryError('every UK registry sub-source failed', {
-        hint: 'check connectivity, or set the FINDER_UK_* URL env vars to current sources',
+        hint: 'check connectivity, or set FINDER_UK_OFS_URL / FINDER_UK_HESA_URL to a reachable source',
       });
     }
 
     return {
       institutions,
       sources,
-      filterApplied: 'Degree-granting HE providers (union of HESA + four nation registers)',
+      filterApplied: 'Registered HE providers (OfS England register; HESA UK-wide when reachable)',
       lowerConfidence: succeeded < UK_SUB_SOURCES.length,
     };
   }
@@ -131,19 +118,57 @@ async function fetchSubSource(
   if (!res.ok) {
     throw new RegistryError(`${sub.label} download failed (HTTP ${res.status})`);
   }
-  const parsed = parseCsvRegistry(res.text(), {
-    country: 'UK',
-    registrySource: sub.registrySource,
-    columns: sub.columns,
-  });
-  const institutions = sub.fixedRegion
-    ? parsed.map((inst) => ({
-        ...inst,
-        region: inst.region.length > 0 ? inst.region : sub.fixedRegion!,
-      }))
-    : parsed;
+  const institutions = sub.parse(res.text());
   if (institutions.length === 0) {
     throw new RegistryError(`${sub.label} produced zero institutions`);
   }
   return { institutions };
+}
+
+/** Parse the OfS Register API JSON array into England HE institutions. */
+function parseOfsJson(body: string): RegistryInstitution[] {
+  let json: unknown;
+  try {
+    json = JSON.parse(body);
+  } catch (err) {
+    throw new RegistryError('OfS Register API response was not valid JSON', { cause: err });
+  }
+  if (!Array.isArray(json)) {
+    throw new RegistryError('OfS Register API response was not a JSON array');
+  }
+
+  const institutions: RegistryInstitution[] = [];
+  for (const item of json) {
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Record<string, unknown>;
+    // Skip providers that have left the register.
+    if (str(record['DateOfRemovalFromRegister']) || str(record['DateOfVoluntaryDeregistration'])) {
+      continue;
+    }
+    const name = cleanName(
+      str(record['CommonName']) ||
+        firstLine(str(record['TradingName'])) ||
+        str(record['LegalName']),
+    );
+    if (name.length === 0) continue;
+    const ukprn = str(record['Ukprn']).trim();
+    institutions.push({
+      name,
+      country: 'UK',
+      region: 'England',
+      official_url: canonicalUrl(str(record['Website'])),
+      registry_source: 'OfS Register',
+      raw_id: ukprn.length > 0 ? ukprn : null,
+    });
+  }
+  return institutions;
+}
+
+function str(value: unknown): string {
+  if (typeof value === 'string') return value;
+  return value === null || value === undefined ? '' : String(value);
+}
+
+function firstLine(value: string): string {
+  return value.split(/\r?\n/)[0]?.trim() ?? '';
 }
