@@ -49,8 +49,8 @@ Six countries are preloaded: **UK, US, Canada, Australia, Germany, Netherlands.*
 Requires **Node.js ≥ 20**.
 
 ```sh
-git clone https://github.com/jalol-otanazar/OpenFinder.git
-cd OpenFinder
+git clone https://github.com/jalol-otanazar/FInder.git
+cd FInder
 npm install
 npm run build
 ```
