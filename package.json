@@ -1,0 +1,48 @@
+{
+  "name": "finder",
+  "version": "0.1.0",
+  "description": "An exhaustive, goal-aware graduate-program advisor.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "finder": "bin/finder.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx src/cli/index.ts",
+    "start": "node bin/finder.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.1",
+    "adm-zip": "^0.5.16",
+    "cheerio": "^1.0.0",
+    "commander": "^12.1.0",
+    "csv-parse": "^5.6.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^22.10.5",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.1",
+    "vitest": "^2.1.8"
+  }
+}

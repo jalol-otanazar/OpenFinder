@@ -1,0 +1,10 @@
+node_modules/
+dist/
+runs/
+.finder-cache/
+.npm-cache/
+FInder.npm-cache/
+*.log
+.DS_Store
+coverage/
+.claude/settings.local.json
