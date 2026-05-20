@@ -1,13 +1,32 @@
 import { z } from 'zod';
 
-/** The six preloaded registry countries (docs/country-registries.md). */
+/** The preloaded registry countries (docs/country-registries.md). */
 export const CountryCodeSchema = z.enum([
+  // Original six.
   'UK',
   'US',
   'Canada',
   'Australia',
   'Germany',
   'Netherlands',
+  // Western Europe.
+  'France',
+  'Italy',
+  'Spain',
+  'Switzerland',
+  'Austria',
+  'Belgium',
+  'Ireland',
+  // Nordics.
+  'Sweden',
+  'Norway',
+  'Denmark',
+  'Finland',
+  // Asia.
+  'China',
+  'Japan',
+  'Korea',
+  'Singapore',
 ]);
 export type CountryCode = z.infer<typeof CountryCodeSchema>;
 

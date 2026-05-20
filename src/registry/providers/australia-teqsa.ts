@@ -30,7 +30,7 @@ export class AustraliaTeqsaProvider implements RegistryProvider {
     const url = process.env[AU_ENV] ?? DEFAULT_AU_URL;
     ctx.logger.step('Australia: fetching TEQSA National Register…');
 
-    const res = await ctx.fetcher.fetch({ url, timeoutMs: 90_000 });
+    const res = await ctx.fetcher.fetch({ url, timeoutMs: 90_000, maxTier: 'headless' });
     if (!res.ok) {
       throw new RegistryError(`TEQSA registry download failed (HTTP ${res.status})`, {
         hint: `set ${AU_ENV} to the current TEQSA National Register export URL`,

@@ -483,6 +483,7 @@ async function defaultLlm(): Promise<LlmComplete> {
 }
 
 const COUNTRY_ALIASES: Record<string, CountryCode> = {
+  // UK
   uk: 'UK',
   'united kingdom': 'UK',
   britain: 'UK',
@@ -491,23 +492,103 @@ const COUNTRY_ALIASES: Record<string, CountryCode> = {
   scotland: 'UK',
   wales: 'UK',
   gb: 'UK',
+  // US
   us: 'US',
   usa: 'US',
   'united states': 'US',
   'united states of america': 'US',
   america: 'US',
+  // Canada
   canada: 'Canada',
   ca: 'Canada',
+  // Australia
   australia: 'Australia',
   au: 'Australia',
   aus: 'Australia',
+  // Germany
   germany: 'Germany',
   de: 'Germany',
   deutschland: 'Germany',
+  // Netherlands
   netherlands: 'Netherlands',
   'the netherlands': 'Netherlands',
   holland: 'Netherlands',
   nl: 'Netherlands',
+  // France
+  france: 'France',
+  fr: 'France',
+  // Italy
+  italy: 'Italy',
+  italia: 'Italy',
+  it: 'Italy',
+  // Spain
+  spain: 'Spain',
+  españa: 'Spain',
+  espana: 'Spain',
+  es: 'Spain',
+  // Switzerland
+  switzerland: 'Switzerland',
+  schweiz: 'Switzerland',
+  suisse: 'Switzerland',
+  svizzera: 'Switzerland',
+  ch: 'Switzerland',
+  // Austria
+  austria: 'Austria',
+  österreich: 'Austria',
+  oesterreich: 'Austria',
+  at: 'Austria',
+  // Belgium
+  belgium: 'Belgium',
+  belgië: 'Belgium',
+  belgie: 'Belgium',
+  belgique: 'Belgium',
+  be: 'Belgium',
+  // Ireland
+  ireland: 'Ireland',
+  éire: 'Ireland',
+  eire: 'Ireland',
+  ie: 'Ireland',
+  // Sweden
+  sweden: 'Sweden',
+  sverige: 'Sweden',
+  se: 'Sweden',
+  // Norway
+  norway: 'Norway',
+  norge: 'Norway',
+  noreg: 'Norway',
+  no: 'Norway',
+  // Denmark
+  denmark: 'Denmark',
+  danmark: 'Denmark',
+  dk: 'Denmark',
+  // Finland
+  finland: 'Finland',
+  suomi: 'Finland',
+  fi: 'Finland',
+  // China
+  china: 'China',
+  prc: 'China',
+  'peoples republic of china': 'China',
+  "people's republic of china": 'China',
+  zhongguo: 'China',
+  cn: 'China',
+  // Japan
+  japan: 'Japan',
+  nihon: 'Japan',
+  nippon: 'Japan',
+  jp: 'Japan',
+  // Korea
+  korea: 'Korea',
+  'south korea': 'Korea',
+  southkorea: 'Korea',
+  'republic of korea': 'Korea',
+  rok: 'Korea',
+  kr: 'Korea',
+  hanguk: 'Korea',
+  // Singapore
+  singapore: 'Singapore',
+  singapur: 'Singapore',
+  sg: 'Singapore',
 };
 
 /** Resolve free-text country names to the six supported codes. */

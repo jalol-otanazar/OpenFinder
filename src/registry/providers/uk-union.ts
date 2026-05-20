@@ -1,5 +1,6 @@
 import { RegistryError } from '../../core/errors.js';
 import type { RegistryInstitution, RegistrySource } from '../../core/types/registry.js';
+import type { FetchTier } from '../../tools/fetcher.js';
 import { canonicalUrl, cleanName } from '../normalize.js';
 import type { RegistryFetchContext, RegistryFetchResult, RegistryProvider } from '../provider.js';
 import { type CsvColumnSpec, parseCsvRegistry } from './csv-registry.js';
@@ -23,6 +24,8 @@ interface UkSubSource {
   registrySource: string;
   /** Turn a raw response body into institutions. */
   parse: (body: string) => RegistryInstitution[];
+  /** Highest fetch tier this sub-source needs — HESA gets `headless` to clear Cloudflare. */
+  maxTier?: FetchTier;
 }
 
 const HESA_COLUMNS: CsvColumnSpec = {
@@ -48,6 +51,8 @@ const UK_SUB_SOURCES: UkSubSource[] = [
     registrySource: 'HESA',
     parse: (body) =>
       parseCsvRegistry(body, { country: 'UK', registrySource: 'HESA', columns: HESA_COLUMNS }),
+    // HESA sits behind a Cloudflare JS challenge; escalate to headless on block.
+    maxTier: 'headless',
   },
 ];
 
@@ -76,7 +81,7 @@ export class UkUnionProvider implements RegistryProvider {
           url,
           fetched_at: new Date().toISOString(),
           row_count: outcome.value.institutions.length,
-          tier: 'http',
+          tier: outcome.value.tierUsed,
           note: '',
         });
       } else {
@@ -112,9 +117,13 @@ export class UkUnionProvider implements RegistryProvider {
 async function fetchSubSource(
   sub: UkSubSource,
   ctx: RegistryFetchContext,
-): Promise<{ institutions: RegistryInstitution[] }> {
+): Promise<{ institutions: RegistryInstitution[]; tierUsed: FetchTier }> {
   const url = process.env[sub.envVar] ?? sub.defaultUrl;
-  const res = await ctx.fetcher.fetch({ url, timeoutMs: 90_000 });
+  const res = await ctx.fetcher.fetch({
+    url,
+    timeoutMs: 90_000,
+    ...(sub.maxTier ? { maxTier: sub.maxTier } : {}),
+  });
   if (!res.ok) {
     throw new RegistryError(`${sub.label} download failed (HTTP ${res.status})`);
   }
@@ -122,7 +131,7 @@ async function fetchSubSource(
   if (institutions.length === 0) {
     throw new RegistryError(`${sub.label} produced zero institutions`);
   }
-  return { institutions };
+  return { institutions, tierUsed: res.tierUsed };
 }
 
 /** Parse the OfS Register API JSON array into England HE institutions. */

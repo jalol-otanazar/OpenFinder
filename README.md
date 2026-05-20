@@ -40,7 +40,14 @@ fresh session behaves identically to a long one.
 | 5 | **scoring** | `finder scoring` | Scores each program on 7 goal-weighted dimensions |
 | 6 | **reporting** | `finder reporting` | Renders the spreadsheet, shortlist, and report |
 
-Six countries are preloaded: **UK, US, Canada, Australia, Germany, Netherlands.**
+Twenty-one countries are preloaded:
+
+- **Anglosphere** — UK, US, Canada, Australia, Ireland
+- **Western Europe** — Germany, Netherlands, France, Italy, Spain, Switzerland, Austria, Belgium
+- **Nordics** — Sweden, Norway, Denmark, Finland
+- **Asia** — China, Japan, Korea, Singapore
+
+Free-text country names in your intake prompt (e.g. _Deutschland_, _suomi_, _南韓_-spelled-Korea, _nihon_) are normalised to the canonical list.
 
 ---
 
@@ -121,7 +128,7 @@ All artifacts land in `runs/<run-id>/`:
 ## Development
 
 ```sh
-npm test         # vitest — 164 offline tests
+npm test         # vitest — offline test suite (registry providers, pipeline, scoring)
 npm run lint     # eslint
 npm run typecheck
 ```
@@ -136,14 +143,20 @@ design specifications that drive the build live in `skills/`, `rules/`, `schemas
 ## Status
 
 All six pipeline skills are built and the CLI runs end to end. The pipeline logic is
-covered by 164 offline tests (stub LLM / fetch / search); live LLM, fetch, and search
+covered by an offline test suite (stub LLM / fetch / search); live LLM, fetch, and search
 behaviour is exercised only by the opt-in `FINDER_LIVE_SMOKE` suite — a real end-to-end
 run against your own provider key is worthwhile validation before relying on the output.
 
-Live registries verified working today: **US** (IPEDS), **UK** (OfS Register), **Germany**
-(Hochschulkompass), **Netherlands** (DUO/RIO). **Canada** (Universities Canada) and
-**Australia** (TEQSA) may bot-block plain HTTP clients depending on your IP — set
-`FINDER_CA_REGISTRY_URL` / `FINDER_AU_REGISTRY_URL` to a manually saved page if so.
+Registries fall into three groups:
+
+- **Plain HTTP, machine-readable** — US (IPEDS), UK OfS, Germany (Hochschulkompass), Netherlands (DUO/RIO), France (data.esr), Italy (MUR ustat). These work with no extra setup.
+- **Bot-walled / Cloudflare** — UK HESA, Universities Canada, Australia TEQSA, and several of the new HTML-scrape sources. These auto-escalate to an **optional headless fetch tier**. Enable it once with:
+  ```sh
+  npm install playwright
+  npx playwright install chromium
+  ```
+  Without Playwright installed, the providers fail gracefully with the standard "unreachable — degraded" note, and the UK/Belgium/Japan/Korea/Singapore _union_ providers keep going with whatever sub-source did succeed.
+- **Lower-confidence union** — China, Japan, Korea, Singapore, Belgium, Switzerland, Spain, Ireland, Sweden, Norway, Denmark, Finland, Austria. No clean official machine-readable register exists; the universe is built from a documented union of independent lists and reported as `lower-confidence` in the coverage section. Every default URL is overridable via `FINDER_<CC>_REGISTRY_URL` (see [docs/country-registries.md](docs/country-registries.md)).
 
 ## License
 

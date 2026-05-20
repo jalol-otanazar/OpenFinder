@@ -1,7 +1,7 @@
 import { BlockingError } from '../core/errors.js';
 import { logger } from '../core/logger.js';
 import type { CountryCode, Snapshot, SnapshotMeta } from '../core/types/registry.js';
-import { type Fetcher, HttpFetcher } from '../tools/fetcher.js';
+import { defaultTieredFetcher, type Fetcher } from '../tools/fetcher.js';
 import { dedupeInstitutions } from './dedupe.js';
 import { getRegistryProvider } from './providers/index.js';
 import { SnapshotStore } from './snapshot-store.js';
@@ -14,8 +14,19 @@ import { SnapshotStore } from './snapshot-store.js';
 export class RegistryService {
   constructor(
     private readonly store: SnapshotStore = new SnapshotStore(),
-    private readonly fetcher: Fetcher = new HttpFetcher(),
+    private readonly fetcher: Fetcher = defaultTieredFetcher(),
   ) {}
+
+  /**
+   * Release any long-lived resources held by the fetcher (in particular a
+   * headless Chromium instance). Safe to call when the fetcher has none.
+   */
+  async dispose(): Promise<void> {
+    const f = this.fetcher as { dispose?: () => Promise<void> };
+    if (typeof f.dispose === 'function') {
+      await f.dispose();
+    }
+  }
 
   /** Fetch a country's registry and cache a fresh dated snapshot. */
   async refresh(country: CountryCode): Promise<Snapshot> {

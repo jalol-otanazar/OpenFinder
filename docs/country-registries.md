@@ -70,6 +70,107 @@ Southampton, Leeds, Glasgow, Warwick precisely because no UK-wide list was ever 
 | DUO — register of recognised institutions / RIO | All recognised institutions, Netherlands | Official government register.                  |
 | Nuffic / studyfinder                            | Cross-check                              | Authoritative for accredited program listings. |
 
+## Added in this round (Western Europe, Nordics, Asia)
+
+Every provider below accepts a `FINDER_<CC>_REGISTRY_URL` environment variable to swap the
+default source URL. Sources marked **lower-confidence** rely on a union of independent
+lists (per §3 below) rather than a single official register; the coverage report shows
+the flag so students can read the universe in context.
+
+### France
+
+| Source                                                   | Covers                          | Notes                                               |
+| -------------------------------------------------------- | ------------------------------- | --------------------------------------------------- |
+| data.esr — "Principaux établissements" CSV               | Universities, grandes écoles    | Official open-data export; semicolon-delimited CSV. |
+
+### Italy
+
+| Source                              | Covers           | Notes                                       |
+| ----------------------------------- | ---------------- | ------------------------------------------- |
+| MUR ustat — Atenei                  | All universities | Official CSV from the Ministero ustat API. |
+
+### Spain (lower-confidence)
+
+| Source                                              | Covers                                    | Notes                                              |
+| --------------------------------------------------- | ----------------------------------------- | -------------------------------------------------- |
+| Ministerio de Universidades — RUCT directory page   | Recognised Spanish universities           | No public CSV; HTML scrape of the official listing. |
+
+### Switzerland (lower-confidence)
+
+| Source                                | Covers                                                       | Notes                                                |
+| ------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| swissuniversities — member list       | Cantonal universities, ETH/EPFL, universities of applied sciences | The umbrella organisation of all recognised Swiss HEIs. |
+
+### Austria (lower-confidence)
+
+| Source                                              | Covers                                                                | Notes                                          |
+| --------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------- |
+| BMBWF — Hochschulsystem directory                   | Universitäten, Fachhochschulen, pädagogische Hochschulen, Akademien   | The federal ministry's recognised-HEI listing. |
+
+### Belgium (lower-confidence — union)
+
+| Source                                                | Covers                          | Notes                                                |
+| ----------------------------------------------------- | ------------------------------- | ---------------------------------------------------- |
+| VLIR — Flemish universities                           | Flanders                        | Flemish-community umbrella organisation.             |
+| CRef / ARES — Wallonia-Brussels universities          | Wallonia-Brussels               | French-community umbrella organisation.              |
+
+### Ireland (lower-confidence)
+
+| Source                                       | Covers                                                                | Notes                                  |
+| -------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- |
+| HEA — designated higher-education institutions | Universities, technological universities, IoTs, colleges of education | The Higher Education Authority listing. |
+
+### Sweden (lower-confidence)
+
+| Source                                  | Covers                                                | Notes                                       |
+| --------------------------------------- | ----------------------------------------------------- | ------------------------------------------- |
+| UKÄ — Swedish HE institutions           | State, independent, and private degree-awarding HEIs  | Swedish HE Authority directory.             |
+
+### Norway (lower-confidence)
+
+| Source                                                | Covers                                              | Notes                                           |
+| ----------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------- |
+| NOKUT / Study in Norway — accredited HE institutions  | Universities + university colleges                  | NOKUT is the accreditation agency.              |
+
+### Denmark (lower-confidence)
+
+| Source                                                  | Covers                                                                 | Notes                                            |
+| ------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------ |
+| UFM / Study in Denmark — recognised HE institutions     | Universities, business schools, university colleges, academies         | Ministry of HE and Science directory.            |
+
+### Finland (lower-confidence)
+
+| Source                                              | Covers                                          | Notes                                          |
+| --------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| OPH / Study in Finland — universities and UAS       | Yliopisto + ammattikorkeakoulu                  | National Agency for Education directory.       |
+
+### China (lower-confidence)
+
+| Source                                        | Covers                                | Notes                                                                                  |
+| --------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------- |
+| MoE-recognised universities (Wikipedia mirror) | All MoE-recognised HEIs               | The MoE page is partially geofenced; default uses a Wikipedia mirror as cross-check.   |
+
+### Japan (lower-confidence — union)
+
+| Source                                                | Covers                                       | Notes                                                                     |
+| ----------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------- |
+| MEXT-recognised universities (Wikipedia cross-check)  | National, public, private universities       | MEXT publishes HTML in Japanese only; the Wikipedia mirror is reliable.   |
+| JAUP — Japan Association of Private Universities      | Private universities                         | Strengthens private-sector coverage.                                      |
+
+### Korea (lower-confidence — union)
+
+| Source                                              | Covers                                | Notes                                                  |
+| --------------------------------------------------- | ------------------------------------- | ------------------------------------------------------ |
+| KCUE — Korean Council for University Education      | Recognised universities               | The national university council.                       |
+| KEDI — Korean Educational Development Institute     | National universities                 | National research-and-statistics body.                 |
+
+### Singapore (lower-confidence — union)
+
+| Source                                          | Covers                                | Notes                                  |
+| ----------------------------------------------- | ------------------------------------- | -------------------------------------- |
+| MOE — autonomous universities                   | The six public autonomous universities | Government-funded universities.        |
+| CPE — registered private HEIs                   | CPE-registered private universities    | Committee for Private Education list.  |
+
 ## The add-a-country recipe
 
 When the student scopes a country not listed above, the `universe` skill follows this

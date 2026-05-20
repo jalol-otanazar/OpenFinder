@@ -1,3 +1,4 @@
+import type { HeadlessFetcher } from './fetcher-headless.js';
 import { logger } from '../core/logger.js';
 
 /**
@@ -111,4 +112,98 @@ function backoff(attempt: number): Promise<void> {
 
 function describe(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/**
+ * Composite fetcher that starts at the HTTP tier and escalates to the headless
+ * tier on signals that a plain HTTP fetch was bot-blocked. Escalation only
+ * happens when the caller permits it with `maxTier: 'headless'`.
+ *
+ * The headless implementation is lazy-loaded so a process that never escalates
+ * never imports `playwright`.
+ */
+export class TieredFetcher implements Fetcher {
+  private headless: HeadlessFetcher | null = null;
+
+  constructor(private readonly http: Fetcher = new HttpFetcher()) {}
+
+  async fetch(req: FetchRequest): Promise<FetchResult> {
+    const tier = req.maxTier ?? 'http';
+    if (tier === 'http') {
+      return this.http.fetch(req);
+    }
+
+    let httpResult: FetchResult | null = null;
+    let httpError: unknown;
+    try {
+      httpResult = await this.http.fetch(req);
+      if (!shouldEscalate(httpResult)) return httpResult;
+      logger.debug(
+        `tiered-fetch: HTTP returned ${httpResult.status} for ${req.url} — escalating to headless`,
+      );
+    } catch (err) {
+      httpError = err;
+      logger.debug(`tiered-fetch: HTTP threw for ${req.url} — escalating to headless`);
+    }
+
+    try {
+      const headless = await this.ensureHeadless();
+      return await headless.fetch(req);
+    } catch (err) {
+      // Headless escalation failed too. If HTTP at least returned a response,
+      // surface that — its body/status carries diagnostic value (e.g. the
+      // Cloudflare "Just a moment..." page) and lets providers degrade.
+      if (httpResult) return httpResult;
+      throw err instanceof Error
+        ? err
+        : new Error(`fetch failed for ${req.url}: ${describe(httpError ?? err)}`);
+    }
+  }
+
+  async dispose(): Promise<void> {
+    if (this.headless) {
+      await this.headless.dispose();
+      this.headless = null;
+    }
+  }
+
+  private async ensureHeadless(): Promise<HeadlessFetcher> {
+    if (!this.headless) {
+      const mod = await import('./fetcher-headless.js');
+      this.headless = new mod.HeadlessFetcher();
+    }
+    return this.headless;
+  }
+}
+
+/** The shared, lazily-headless fetcher used by registry providers. */
+export function defaultTieredFetcher(): TieredFetcher {
+  return new TieredFetcher();
+}
+
+/**
+ * Heuristic for "this HTTP response was bot-blocked, the headless tier might
+ * actually succeed." Conservative — false positives waste a browser launch
+ * but never hide a working response.
+ */
+function shouldEscalate(res: FetchResult): boolean {
+  if (res.status === 403 || res.status === 503 || res.status === 429) return true;
+  if (res.status >= 200 && res.status < 300) {
+    const sample = res.bytes.length > 0 ? res.bytes.subarray(0, 4096).toString('utf-8') : '';
+    if (sample.length === 0) return true;
+    if (looksLikeCloudflareChallenge(sample)) return true;
+  }
+  return false;
+}
+
+function looksLikeCloudflareChallenge(body: string): boolean {
+  const lower = body.toLowerCase();
+  return (
+    lower.includes('__cf_chl_jschl_tk__') ||
+    lower.includes('cf-browser-verification') ||
+    lower.includes('cf_chl_opt') ||
+    lower.includes('<title>just a moment') ||
+    lower.includes('attention required! | cloudflare') ||
+    lower.includes('checking your browser before accessing')
+  );
 }

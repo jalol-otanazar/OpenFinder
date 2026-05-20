@@ -8,6 +8,21 @@ const COUNTRY_PREFIX: Record<CountryCode, string> = {
   Australia: 'au',
   Germany: 'de',
   Netherlands: 'nl',
+  France: 'fr',
+  Italy: 'it',
+  Spain: 'es',
+  Switzerland: 'ch',
+  Austria: 'at',
+  Belgium: 'be',
+  Ireland: 'ie',
+  Sweden: 'se',
+  Norway: 'no',
+  Denmark: 'dk',
+  Finland: 'fi',
+  China: 'cn',
+  Japan: 'jp',
+  Korea: 'kr',
+  Singapore: 'sg',
 };
 
 /** Characters that NFKD normalization does not decompose but we still want folded. */

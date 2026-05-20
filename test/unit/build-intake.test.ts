@@ -141,11 +141,11 @@ describe('runIntake', () => {
   it('drops unsupported countries and keeps the supported ones', async () => {
     const result = await runIntake(
       'run-5',
-      { prompt: 'CS masters in the US and France.' },
+      { prompt: 'CS masters in the US and Atlantis.' },
       {
         store,
         llm: new StubLlm(() =>
-          JSON.stringify({ preferences: { fields: ['Computer Science'], target_countries: ['US', 'France'] } }),
+          JSON.stringify({ preferences: { fields: ['Computer Science'], target_countries: ['US', 'Atlantis'] } }),
         ),
       },
     );

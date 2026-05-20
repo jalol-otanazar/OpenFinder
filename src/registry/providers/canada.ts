@@ -33,7 +33,7 @@ export class CanadaProvider implements RegistryProvider {
     const selector = process.env[CA_SELECTOR_ENV] ?? 'a[href]';
     ctx.logger.step('Canada: fetching Universities Canada member list…');
 
-    const res = await ctx.fetcher.fetch({ url, timeoutMs: 90_000 });
+    const res = await ctx.fetcher.fetch({ url, timeoutMs: 90_000, maxTier: 'headless' });
     if (!res.ok) {
       throw new RegistryError(`Universities Canada page fetch failed (HTTP ${res.status})`, {
         hint: `set ${CA_ENV} to the current member-universities page`,

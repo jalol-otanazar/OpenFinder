@@ -14,7 +14,7 @@ export function registerUniverseCommand(program: Command): void {
     .command('refresh')
     .description('Fetch registries and cache dated snapshots.')
     .option('--country <list>', 'comma-separated countries to refresh')
-    .option('--all', 'refresh all six preloaded countries')
+    .option('--all', 'refresh every preloaded country')
     .action(async (opts: { country?: string; all?: boolean }) => {
       await runRefresh(opts);
     });
@@ -32,30 +32,36 @@ export function registerUniverseCommand(program: Command): void {
 async function runRefresh(opts: { country?: string; all?: boolean }): Promise<void> {
   const countries = opts.country ? parseCountries(opts.country) : ALL_COUNTRIES;
   if (!opts.country && !opts.all) {
-    logger.info('No --country given; refreshing all six preloaded registries.');
+    logger.info(`No --country given; refreshing all ${ALL_COUNTRIES.length} preloaded registries.`);
   }
 
   const service = new RegistryService();
   let ok = 0;
   let failed = 0;
 
-  for (const country of countries) {
-    try {
-      const snapshot = await service.refresh(country);
-      ok++;
-      const degraded = snapshot.meta.sources.filter((s) => s.note.length > 0);
-      logger.success(
-        `${country}: ${snapshot.meta.institution_count} institutions cached ` +
-          `(${snapshot.meta.fetched_at.slice(0, 10)})`,
-      );
-      for (const source of degraded) {
-        logger.warn(`  ${country} sub-source "${source.name}": ${source.note}`);
+  try {
+    for (const country of countries) {
+      try {
+        const snapshot = await service.refresh(country);
+        ok++;
+        const degraded = snapshot.meta.sources.filter((s) => s.note.length > 0);
+        logger.success(
+          `${country}: ${snapshot.meta.institution_count} institutions cached ` +
+            `(${snapshot.meta.fetched_at.slice(0, 10)})`,
+        );
+        for (const source of degraded) {
+          logger.warn(`  ${country} sub-source "${source.name}": ${source.note}`);
+        }
+      } catch (err) {
+        failed++;
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error(`${country}: refresh failed — ${message}`);
       }
-    } catch (err) {
-      failed++;
-      const message = err instanceof Error ? err.message : String(err);
-      logger.error(`${country}: refresh failed — ${message}`);
     }
+  } finally {
+    // Release the headless browser if one was launched; otherwise the CLI
+    // process would hang on a long-lived Chromium handle.
+    await service.dispose();
   }
 
   logger.info(`\nRefresh complete: ${ok} succeeded, ${failed} failed.`);
